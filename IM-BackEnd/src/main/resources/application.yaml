@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: IM-BackEnd
+  datasource:
+    url: jdbc:mysql://localhost:33060/im_db?createDatabaseIfNotExist=true
+    username: root
+    password: secret
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
