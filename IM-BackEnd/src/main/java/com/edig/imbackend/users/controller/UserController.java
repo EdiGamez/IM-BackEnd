@@ -11,6 +11,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +22,7 @@ import java.util.Optional;
 @RequestMapping("/api/users")
 @AllArgsConstructor
 public class UserController {
+
 
     private final UserService userService;
 
@@ -33,9 +35,8 @@ public class UserController {
     @GetMapping("/user/{username}")
     public ResponseEntity<?> getUserByUsername(@PathVariable String username) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (!auth.getName().equals(username)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponse<>(HttpStatus.FORBIDDEN.value(), "Access Denied", null));
-        }
+        ResponseEntity<ApiResponse<Object>> FORBIDDEN = validateUser(username);
+        if (FORBIDDEN != null) return FORBIDDEN;
         Optional<UserRequestDto> user = Optional.ofNullable(userService.findByUsername(username));
         return user.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -56,9 +57,8 @@ public class UserController {
     @PutMapping("/{username}")
     public ResponseEntity<?> updateUser(@PathVariable String username, @Valid @RequestBody UserRequestDto user) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (!auth.getName().equals(username)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponse<>(HttpStatus.FORBIDDEN.value(), "Access Denied", null));
-        }
+        ResponseEntity<ApiResponse<Object>> FORBIDDEN = validateUser(username);
+        if (FORBIDDEN != null) return FORBIDDEN;
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "User updated successfully", userService.update(user, username)));
     }
 
@@ -70,12 +70,21 @@ public class UserController {
 
     @PostMapping("/{username}/update-password")
     public ResponseEntity<?> updatePassword(@PathVariable String username, @Valid @RequestBody PasswordUpdateDto passwordUpdateDto) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (!auth.getName().equals(username)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponse<>(HttpStatus.FORBIDDEN.value(), "Access Denied", null));
-        }
+        ResponseEntity<ApiResponse<Object>> FORBIDDEN = validateUser(username);
+        if (FORBIDDEN != null) return FORBIDDEN;
         userService.updatePassword(username, passwordUpdateDto.getPassword(), passwordUpdateDto.getNewPassword());
         return ResponseEntity.ok().body(    new ApiResponse<>(HttpStatus.OK.value(),"Password Updated Successful",null));
+    }
+
+    private static ResponseEntity<ApiResponse<Object>> validateUser(String username) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(role -> role.equals("ROLE_ADMIN"));
+        if (!auth.getName().equals(username) && !isAdmin) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponse<>(HttpStatus.FORBIDDEN.value(), "Access Denied", null));
+        }
+        return null;
     }
 
 }

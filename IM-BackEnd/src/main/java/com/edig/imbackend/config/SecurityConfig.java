@@ -40,7 +40,13 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
                                 .requestMatchers(HttpMethod.PUT, "/api/users/{username}").hasAnyRole("USER", "ADMIN")
                                 .requestMatchers(HttpMethod.DELETE, "/api/users").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.GET, "/api/users/{username}/products").hasAnyRole("USER", "ADMIN")
+                                .requestMatchers(HttpMethod.POST, "/api/users/{username}/products").hasAnyRole("USER", "ADMIN")
+                                .requestMatchers(HttpMethod.GET, "/api/users/{username}/products/{productId}").hasAnyRole("USER", "ADMIN")
+                                .requestMatchers(HttpMethod.PUT, "/api/users/{username}/products/{productId}").hasAnyRole("USER", "ADMIN")
+                                .requestMatchers(HttpMethod.DELETE, "/api/users/{username}/products/{productId}").hasAnyRole("USER", "ADMIN")
                                 .anyRequest().authenticated()
+
                 )
                 .addFilter(new JwtAuthFilter(authenticationManager()))
                 .addFilter(new ValidationFilter(authenticationManager()))

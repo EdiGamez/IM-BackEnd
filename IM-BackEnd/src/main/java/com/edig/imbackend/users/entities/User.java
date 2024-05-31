@@ -1,6 +1,7 @@
 package com.edig.imbackend.users.entities;
 
 import com.edig.imbackend.auth.entities.Rol;
+import com.edig.imbackend.products.entities.Product;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -31,5 +32,7 @@ public class User {
             uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "role_id"})
     )
     private List<Rol> roles;
+    @OneToMany(mappedBy = "user")
+    private List<Product> products;
 
 }
